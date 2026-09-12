@@ -2,11 +2,11 @@ from typing import Any
 from sys import modules
 
 
-def scalar(value):
+def _scalar(value):
     return value
 
 
-def detect_numpy_import():
+def _detect_numpy_import():
     if "numpy" in modules:
         import numpy as np  # type: ignore
 
@@ -20,19 +20,19 @@ def detect_numpy_import():
         def blank():
             pass
 
-        global _scalar, _detect_numpy_import
-        _scalar = numpy_scalar
-        _detect_numpy_import = blank
+        global scalar, detect_numpy_import
+        scalar = numpy_scalar
+        detect_numpy_import = blank
 
 
-_scalar = scalar
-_detect_numpy_import = detect_numpy_import
+scalar = _scalar
+detect_numpy_import = _detect_numpy_import
 
 
 class ValueHandler:
 
     def postprocess(self, value: Any) -> Any:
-        _detect_numpy_import()
+        detect_numpy_import()
         return self._postprocess(value)
 
     def _postprocess(self, value: Any) -> Any:
@@ -47,7 +47,7 @@ class ValueHandler:
             return self.postprocess_atomic_value(value)
 
     def postprocess_atomic_value(self, value: Any) -> Any:
-        value = _scalar(value)
+        value = scalar(value)
         if isinstance(value, (list, dict)):
             return self._postprocess(value)
         return value
